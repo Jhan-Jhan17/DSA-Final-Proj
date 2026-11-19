@@ -1,0 +1,631 @@
+{% extends 'base.html' %}
+
+{% block title %}SpartanSync | Student Workspace (AY 2026-2027){% endblock %}
+
+{% block navbar %}
+<nav class="bg-brand-red text-white border-b-2 border-brand-dark">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <img src="{{ url_for('static', filename='img/spartansync_logo.png') }}" alt="SpartanSync Official Seal" class="w-10 h-10 object-contain">
+            <div>
+                <span class="text-lg font-bold tracking-tight">SpartanSync</span>
+                <span class="text-xs text-red-200 ml-2 pl-2 border-l border-red-300">Student Consultation Portal &bull; AY 2026&ndash;2027</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 text-xs">
+            <div class="text-right">
+                <span class="font-bold block text-white">{{ user.name }}</span>
+                <span class="text-red-200 text-2xs block">{{ user.email }} ({{ user.sr_code }})</span>
+            </div>
+            <a href="{{ url_for('logout') }}"
+               class="bg-white text-brand-red hover:bg-gray-100 font-bold px-3 py-1.5 border border-white transition-colors uppercase">
+                Sign Out
+            </a>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+
+    <!-- Workspace Header Banner -->
+    <div class="bg-white border border-gray-300 p-6 shadow-sm">
+        <div class="flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <img src="{{ url_for('static', filename='img/spartansync_logo.png') }}" alt="BatStateU SpartanSync Emblem" class="w-16 h-16 object-contain hidden sm:block">
+                <div>
+                    <span class="text-xs font-bold text-brand-red uppercase tracking-wider block">Student Academic Workspace</span>
+                    <h1 class="text-2xl font-bold text-gray-900 mt-0.5">Welcome, {{ user.name }}</h1>
+                    <p class="text-xs text-gray-600 mt-1">BatStateU Academic Support Services &bull; Academic Year 2026&ndash;2027</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-4 text-center">
+                <div class="border border-gray-200 bg-gray-50 px-4 py-2">
+                    <span class="text-2xs font-bold text-gray-500 uppercase block">Upcoming Sessions</span>
+                    <span class="text-xl font-extrabold text-brand-red block">{{ upcoming_count }}</span>
+                </div>
+                <div class="border border-gray-200 bg-gray-50 px-4 py-2">
+                    <span class="text-2xs font-bold text-gray-500 uppercase block">Completed Sessions</span>
+                    <span class="text-xl font-extrabold text-gray-900 block">{{ completed_count }}</span>
+                </div>
+                <div class="border border-gray-200 bg-gray-50 px-4 py-2">
+                    <span class="text-2xs font-bold text-gray-500 uppercase block">Total Fees Paid</span>
+                    <span class="text-xl font-extrabold text-green-800 block">PHP {{ '%.2f'|format(total_fees_paid) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────── -->
+    <!-- PRIMARY NAVIGATION TABS                         -->
+    <!-- ─────────────────────────────────────────────── -->
+    <div class="bg-white border-2 border-brand-red">
+        <div class="flex flex-wrap border-b border-gray-200 bg-gray-100 text-xs font-bold uppercase tracking-wider">
+            <button type="button" onclick="showDashboardTab('schedule')" id="btn-tab-schedule"
+                    class="tab-btn py-3 px-5 border-b-2 {% if active_tab == 'schedule' %}bg-white border-brand-red text-brand-red{% else %}border-transparent text-gray-600 hover:text-black{% endif %}">
+                1. Book Appointment
+            </button>
+            <button type="button" onclick="showDashboardTab('priority')" id="btn-tab-priority"
+                    class="tab-btn py-3 px-5 border-b-2 {% if active_tab == 'priority' %}bg-white border-brand-red text-brand-red{% else %}border-transparent text-gray-600 hover:text-black{% endif %}">
+                2. Priority Request
+            </button>
+            <button type="button" onclick="showDashboardTab('tutors')" id="btn-tab-tutors"
+                    class="tab-btn py-3 px-5 border-b-2 {% if active_tab == 'tutors' %}bg-white border-brand-red text-brand-red{% else %}border-transparent text-gray-600 hover:text-black{% endif %}">
+                3. Peer Tutors
+            </button>
+            <button type="button" onclick="showDashboardTab('records')" id="btn-tab-records"
+                    class="tab-btn py-3 px-5 border-b-2 {% if active_tab == 'records' %}bg-white border-brand-red text-brand-red{% else %}border-transparent text-gray-600 hover:text-black{% endif %}">
+                4. Consultation Records
+            </button>
+            <button type="button" onclick="showDashboardTab('billing')" id="btn-tab-billing"
+                    class="tab-btn py-3 px-5 border-b-2 {% if active_tab == 'billing' %}bg-white border-brand-red text-brand-red{% else %}border-transparent text-gray-600 hover:text-black{% endif %}">
+                5. Payment &amp; Billing
+            </button>
+        </div>
+
+        <div class="p-6">
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- TAB 1: BOOK APPOINTMENT & TIMETABLE             -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <div id="tab-content-schedule" class="tab-pane {% if active_tab != 'schedule' %}hidden{% endif %} space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 uppercase tracking-tight">Schedule an Academic Consultation</h2>
+                    <p class="text-xs text-gray-600 mt-0.5">Select an accredited peer educator, choose your course, and reserve a conflict-free appointment slot.</p>
+                </div>
+
+                <form action="{{ url_for('book_session') }}" method="POST" id="mainBookingForm" class="space-y-4 border border-gray-200 p-5 bg-gray-50">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Select Peer Tutor</label>
+                            <select name="tutor_name" id="bookingTutorSelect" required class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 bg-white">
+                                {% for tutor in all_tutors %}
+                                <option value="{{ tutor.name }}">{{ tutor.name }} &bull; {{ tutor.subject }} (PHP {{ '%.2f'|format(tutor.hourly_rate) }}/hr)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Subject Area</label>
+                            <select name="subject" id="bookingSubjectSelect" required class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 bg-white">
+                                {% for subj in subjects %}
+                                <option value="{{ subj }}">{{ subj }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Start Time (24h)</label>
+                            <select name="start_time" required class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 bg-white">
+                                {% for h in range(7, 21) %}
+                                <option value="{{ h }}">{{ '%02d' % h }}:00</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">End Time (24h)</label>
+                            <select name="end_time" required class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 bg-white">
+                                {% for h in range(8, 22) %}
+                                <option value="{{ h }}">{{ '%02d' % h }}:00</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Consultation Objective / Notes</label>
+                        <input type="text" name="notes" placeholder="e.g., Problem set verification on dynamic programming algorithms" required
+                               class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 bg-white">
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-xs text-gray-500">Operating Consultation Hours: 07:00 through 21:00</span>
+                        <button type="submit" class="bg-brand-red hover:bg-brand-dark text-white font-bold py-2.5 px-6 text-xs uppercase tracking-wide">
+                            Confirm Appointment Booking
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Current Active Schedule -->
+                <div class="pt-4 border-t border-gray-200">
+                    <h3 class="text-xs font-bold uppercase text-gray-700 tracking-wider mb-3">Today's Reserved Schedule (Active Time Slots)</h3>
+                    {% if schedule %}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                        {% for slot in schedule %}
+                        <div class="border border-brand-red bg-brand-light p-3 text-xs flex justify-between items-center">
+                            <div>
+                                <span class="font-bold text-brand-red block">{{ slot.display }}</span>
+                                <span class="text-gray-800">{{ slot.subject }}</span>
+                            </div>
+                            <span class="border border-brand-red text-brand-red px-2 py-0.5 text-2xs font-bold uppercase">
+                                Booked
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="border border-dashed border-gray-300 p-6 text-center text-gray-500 text-xs">
+                        No active bookings on the schedule today. All operating hours are open for reservation.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- TAB 2: PRIORITY REQUEST                         -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <div id="tab-content-priority" class="tab-pane {% if active_tab != 'priority' %}hidden{% endif %} space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 uppercase tracking-tight">Request Urgent Academic Assistance</h2>
+                    <p class="text-xs text-gray-600 mt-0.5">Submit an inquiry directly to the priority assistance queue. Requests are served by urgency.</p>
+                </div>
+
+                <form action="{{ url_for('submit_help_request') }}" method="POST" class="space-y-4 border border-gray-200 p-5 bg-gray-50">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Subject / Course</label>
+                            <select name="subject" required class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 bg-white">
+                                {% for subj in subjects %}
+                                <option value="{{ subj }}">{{ subj }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Academic Urgency Classification</label>
+                            <select name="urgency_level" required class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 bg-white">
+                                <option value="1">Level 1: Urgent (Exam Within 24 Hours)</option>
+                                <option value="2">Level 2: High (Major Task or Quiz This Week)</option>
+                                <option value="3" selected>Level 3: Medium (Homework &amp; Problem Set Help)</option>
+                                <option value="4">Level 4: Standard (Concept Review &amp; Practice)</option>
+                                <option value="5">Level 5: Flexible (General Inquiry)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Specific Topic or Question Description</label>
+                        <textarea name="topic" rows="3" placeholder="Describe the topics, formulas, or code implementations requiring consultation..." required
+                                  class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 bg-white"></textarea>
+                    </div>
+
+                    <div class="flex justify-end pt-2">
+                        <button type="submit" class="bg-brand-red hover:bg-brand-dark text-white font-bold py-2.5 px-6 text-xs uppercase tracking-wide">
+                            Submit Priority Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- TAB 3: FIND PEER TUTORS                         -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <div id="tab-content-tutors" class="tab-pane {% if active_tab != 'tutors' %}hidden{% endif %} space-y-6">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900 uppercase tracking-tight">Accredited Peer Tutors</h2>
+                        <p class="text-xs text-gray-600 mt-0.5">Faculty-endorsed student facilitators ranked by star rating and consultation volume.</p>
+                    </div>
+
+                    <!-- Filter / Search -->
+                    <form method="GET" action="{{ url_for('student_dashboard') }}" class="flex flex-wrap items-center gap-2 text-xs">
+                        <input type="hidden" name="tab" value="tutors">
+                        <select name="subject" onchange="this.form.submit()" class="px-2 py-1.5 border border-gray-300 text-gray-900 bg-white">
+                            <option value="All" {% if not selected_subject or selected_subject == 'All' %}selected{% endif %}>All Subjects</option>
+                            {% for subj in subjects %}
+                            <option value="{{ subj }}" {% if selected_subject == subj %}selected{% endif %}>{{ subj }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name..."
+                               class="px-2 py-1.5 border border-gray-300 text-gray-900 w-40">
+                        <button type="submit" class="bg-brand-red text-white font-bold px-3 py-1.5 uppercase">Search</button>
+                    </form>
+                </div>
+
+                {% if tutors %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for tutor in tutors %}
+                    <div class="border border-gray-300 p-5 bg-white flex flex-col justify-between hover:border-brand-red">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-base">{{ tutor.name }}</h3>
+                                    <p class="text-xs text-brand-red font-bold uppercase mt-0.5">{{ tutor.subject }}</p>
+                                </div>
+                                <span class="text-xs font-bold px-2 py-0.5 border border-green-700 text-green-900 bg-green-50 uppercase">
+                                    Accredited
+                                </span>
+                            </div>
+
+                            <div class="mt-3 pt-3 border-t border-gray-200 text-xs space-y-1 text-gray-700">
+                                <p><strong class="text-gray-900">Department:</strong> {{ tutor.department }}</p>
+                                <p><strong class="text-gray-900">Consultation Center:</strong> {{ tutor.location }}</p>
+                                <p><strong class="text-gray-900">Honorarium Rate:</strong> PHP {{ '%.2f'|format(tutor.hourly_rate) }} / hr</p>
+                                <div class="flex items-center gap-2 pt-1">
+                                    <span class="bg-brand-light text-brand-red font-bold px-2 py-0.5 border border-red-300">
+                                        Rating: {{ tutor.rating }} / 5.0
+                                    </span>
+                                    <span class="text-gray-500">({{ tutor.sessions }} consultations)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-gray-200 flex gap-2">
+                            <button type="button" onclick="selectTutorAndOpenBooking('{{ tutor.name }}', '{{ tutor.subject }}')"
+                                    class="flex-1 bg-brand-red hover:bg-brand-dark text-white text-xs font-bold py-2 uppercase tracking-wide">
+                                Book Consultation
+                            </button>
+                            <button type="button" onclick="openRatingModal('{{ tutor.name }}')"
+                                    class="border border-gray-400 hover:border-gray-900 text-gray-800 text-xs font-bold px-3 py-2 uppercase">
+                                Rate
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="border border-dashed border-gray-300 p-8 text-center text-gray-500 text-xs">
+                    No tutors found matching the criteria.
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- TAB 4: CONSULTATION RECORDS                     -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <div id="tab-content-records" class="tab-pane {% if active_tab != 'records' %}hidden{% endif %} space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 uppercase tracking-tight">Academic Consultation Records</h2>
+                    <p class="text-xs text-gray-600 mt-0.5">Sequential ledger of past, active, and completed consultation sessions.</p>
+                </div>
+
+                {% if history_size > 0 %}
+                <!-- Single Record Inspector -->
+                <div class="border-2 border-brand-red bg-brand-light p-5">
+                    <div class="flex flex-wrap justify-between items-center pb-3 border-b border-red-200 gap-2">
+                        <div>
+                            <span class="text-xs font-bold uppercase text-brand-red tracking-wider block">Single Record View</span>
+                            <span class="text-sm font-extrabold text-gray-900">
+                                Record {{ history_index + 1 }} of {{ history_size }} &mdash; Reference: {{ current_record.session_id }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold px-3 py-1 border uppercase
+                                {% if current_record.status == 'Completed' %} bg-green-100 border-green-700 text-green-900
+                                {% elif current_record.status == 'Upcoming' %} bg-blue-100 border-blue-700 text-blue-900
+                                {% elif current_record.status == 'Accepted' %} bg-amber-100 border-amber-700 text-amber-900
+                                {% else %} bg-gray-100 border-gray-700 text-gray-900
+                                {% endif %}">
+                                {{ current_record.status }}
+                            </span>
+                            {% if current_record.status == 'Upcoming' or current_record.status == 'Accepted' %}
+                            <form action="{{ url_for('update_session_status') }}" method="POST" class="inline">
+                                <input type="hidden" name="index" value="{{ history_index }}">
+                                <input type="hidden" name="status" value="Completed">
+                                <button type="submit" class="bg-green-800 text-white text-xs font-bold px-2 py-1 uppercase">Mark Completed</button>
+                            </form>
+                            <form action="{{ url_for('update_session_status') }}" method="POST" class="inline">
+                                <input type="hidden" name="index" value="{{ history_index }}">
+                                <input type="hidden" name="status" value="Cancelled">
+                                <button type="submit" class="bg-gray-700 text-white text-xs font-bold px-2 py-1 uppercase">Cancel</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs mt-4">
+                        <div>
+                            <span class="font-bold text-gray-600 block uppercase">Student:</span>
+                            <span class="text-gray-900 text-sm font-semibold">{{ current_record.student_name }}</span>
+                        </div>
+                        <div>
+                            <span class="font-bold text-gray-600 block uppercase">Peer Tutor:</span>
+                            <span class="text-gray-900 text-sm font-semibold">{{ current_record.tutor }}</span>
+                        </div>
+                        <div>
+                            <span class="font-bold text-gray-600 block uppercase">Course / Subject:</span>
+                            <span class="text-gray-900 text-sm font-semibold">{{ current_record.subject }}</span>
+                        </div>
+                        <div>
+                            <span class="font-bold text-gray-600 block uppercase">Time Slot:</span>
+                            <span class="text-gray-900 text-sm font-semibold">{{ current_record.time }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Controls -->
+                <div class="flex justify-between items-center">
+                    <a href="{{ url_for('navigate_history', direction='prev') }}"
+                       class="px-4 py-2 text-xs font-bold uppercase border
+                       {% if history_index > 0 %} bg-gray-800 text-white hover:bg-black border-gray-900 {% else %} bg-gray-100 text-gray-400 border-gray-300 pointer-events-none {% endif %}">
+                        &larr; Previous Record
+                    </a>
+                    <span class="text-xs text-gray-600 font-bold uppercase">Record {{ history_index + 1 }} of {{ history_size }}</span>
+                    <a href="{{ url_for('navigate_history', direction='next') }}"
+                       class="px-4 py-2 text-xs font-bold uppercase border
+                       {% if history_index < history_size - 1 %} bg-gray-800 text-white hover:bg-black border-gray-900 {% else %} bg-gray-100 text-gray-400 border-gray-300 pointer-events-none {% endif %}">
+                        Next Record &rarr;
+                    </a>
+                </div>
+
+                <!-- Master Records Table -->
+                <div class="overflow-x-auto border border-gray-300">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-gray-100 border-b border-gray-300 text-gray-700 uppercase font-bold">
+                            <tr>
+                                <th class="py-2.5 px-3">Session Ref</th>
+                                <th class="py-2.5 px-3">Peer Tutor</th>
+                                <th class="py-2.5 px-3">Subject</th>
+                                <th class="py-2.5 px-3">Time</th>
+                                <th class="py-2.5 px-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for rec in history %}
+                            <tr class="{% if loop.index0 == history_index %}bg-red-50 font-bold{% else %}hover:bg-gray-50{% endif %}">
+                                <td class="py-2.5 px-3 font-semibold">{{ rec.session_id }}</td>
+                                <td class="py-2.5 px-3">{{ rec.tutor }}</td>
+                                <td class="py-2.5 px-3">{{ rec.subject }}</td>
+                                <td class="py-2.5 px-3 text-gray-600">{{ rec.time }}</td>
+                                <td class="py-2.5 px-3">
+                                    <span class="px-2 py-0.5 text-2xs font-bold uppercase border
+                                        {% if rec.status == 'Completed' %} bg-green-100 border-green-700 text-green-900
+                                        {% elif rec.status == 'Upcoming' %} bg-blue-100 border-blue-700 text-blue-900
+                                        {% elif rec.status == 'Accepted' %} bg-amber-100 border-amber-700 text-amber-900
+                                        {% else %} bg-gray-100 border-gray-500 text-gray-800
+                                        {% endif %}">
+                                        {{ rec.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="border border-dashed border-gray-300 p-8 text-center text-gray-500 text-xs">
+                    No consultation records found. Book an appointment or submit a priority request to start.
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- TAB 5: PAYMENT & BILLING SECTION                -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <div id="tab-content-billing" class="tab-pane {% if active_tab != 'billing' %}hidden{% endif %} space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 uppercase tracking-tight">Payment &amp; Honorarium Remittance</h2>
+                    <p class="text-xs text-gray-600 mt-0.5">Official student honorarium remittance via university-accredited payment channels.</p>
+                </div>
+
+                <!-- Payment Summary Metrics -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="border border-green-600 bg-green-50 p-4">
+                        <span class="text-2xs font-bold uppercase text-green-800 block">Verified Payments</span>
+                        <span class="text-2xl font-extrabold text-green-900 block mt-1">PHP {{ '%.2f'|format(total_fees_paid) }}</span>
+                        <span class="text-xs text-green-700 mt-1 block">Acknowledged by Cashier</span>
+                    </div>
+                    <div class="border border-amber-500 bg-amber-50 p-4">
+                        <span class="text-2xs font-bold uppercase text-amber-800 block">Pending Remittances</span>
+                        <span class="text-2xl font-extrabold text-amber-900 block mt-1">PHP {{ '%.2f'|format(total_fees_pending) }}</span>
+                        <span class="text-xs text-amber-700 mt-1 block">Awaiting payment verification</span>
+                    </div>
+                    <div class="border border-gray-300 bg-gray-50 p-4">
+                        <span class="text-2xs font-bold uppercase text-gray-700 block">Standard Rate</span>
+                        <span class="text-2xl font-extrabold text-gray-900 block mt-1">PHP 200.00</span>
+                        <span class="text-xs text-gray-600 mt-1 block">Per 1-Hour Academic Consultation</span>
+                    </div>
+                </div>
+
+                <!-- Submit Payment Remittance Form -->
+                <div class="border border-gray-300 p-5 bg-white">
+                    <h3 class="text-xs font-bold uppercase text-gray-800 tracking-wider mb-3">Submit Payment Remittance Slip</h3>
+                    <form action="{{ url_for('submit_payment') }}" method="POST" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-2xs font-bold uppercase text-gray-700 mb-1">Select Consultation Bill</label>
+                                <select name="payment_id" class="w-full px-3 py-2 text-xs border border-gray-300 bg-white text-gray-900">
+                                    {% for p in payments %}
+                                    <option value="{{ p.payment_id }}">{{ p.payment_id }} &bull; {{ p.session_id }} (PHP {{ '%.2f'|format(p.amount) }})</option>
+                                    {% endfor %}
+                                    {% if not payments %}
+                                    <option value="NEW_PAY">General Consultation Remittance (PHP 200.00)</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-2xs font-bold uppercase text-gray-700 mb-1">Payment Method / Channel</label>
+                                <select name="payment_method" required class="w-full px-3 py-2 text-xs border border-gray-300 bg-white text-gray-900">
+                                    <option value="Landbank Link.BizPortal">Landbank Link.BizPortal</option>
+                                    <option value="GCash / QR Ph">GCash / QR Ph</option>
+                                    <option value="Maya Wallet">Maya Wallet</option>
+                                    <option value="BatStateU University Cashier">BatStateU University Cashier (Over-the-counter)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-2xs font-bold uppercase text-gray-700 mb-1">Official Reference / Transaction No.</label>
+                                <input type="text" name="reference_no" placeholder="e.g., LBP-2026-981240" required
+                                       class="w-full px-3 py-2 text-xs border border-gray-300 bg-white text-gray-900">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-2">
+                            <span class="text-2xs text-gray-500">Attach reference receipt number issued by the banking gateway or cashier.</span>
+                            <button type="submit" class="bg-brand-red hover:bg-brand-dark text-white font-bold py-2.5 px-6 text-xs uppercase tracking-wide">
+                                Submit Remittance Slip
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Payment Records Table -->
+                <div class="border border-gray-300 overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-gray-100 border-b border-gray-300 text-gray-700 uppercase font-bold">
+                            <tr>
+                                <th class="py-2.5 px-3">Payment ID</th>
+                                <th class="py-2.5 px-3">Session Ref</th>
+                                <th class="py-2.5 px-3">Peer Educator</th>
+                                <th class="py-2.5 px-3">Amount</th>
+                                <th class="py-2.5 px-3">Channel</th>
+                                <th class="py-2.5 px-3">Reference No.</th>
+                                <th class="py-2.5 px-3">Status</th>
+                                <th class="py-2.5 px-3">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for pay in payments %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-2.5 px-3 font-semibold text-gray-900">{{ pay.payment_id }}</td>
+                                <td class="py-2.5 px-3">{{ pay.session_id }}</td>
+                                <td class="py-2.5 px-3">{{ pay.tutor_name }}</td>
+                                <td class="py-2.5 px-3 font-bold text-gray-900">PHP {{ '%.2f'|format(pay.amount) }}</td>
+                                <td class="py-2.5 px-3 text-gray-600">{{ pay.payment_method }}</td>
+                                <td class="py-2.5 px-3 font-mono text-gray-800">{{ pay.reference_no }}</td>
+                                <td class="py-2.5 px-3">
+                                    <span class="px-2 py-0.5 text-2xs font-bold uppercase border
+                                        {% if pay.status == 'Verified / Paid' %} bg-green-100 border-green-700 text-green-900
+                                        {% else %} bg-amber-100 border-amber-700 text-amber-900 {% endif %}">
+                                        {{ pay.status }}
+                                    </span>
+                                </td>
+                                <td class="py-2.5 px-3 text-gray-500">{{ pay.date }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not payments %}
+                            <tr>
+                                <td colspan="8" class="text-center py-6 text-gray-500">
+                                    No payment transactions recorded yet. Once a consultation is scheduled, billing records will appear here.
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal: Rate Peer Tutor -->
+<div id="rateTutorModal" class="modal-container hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="modal-backdrop fixed inset-0 bg-black/60"></div>
+    <div class="relative bg-white border-2 border-brand-red max-w-md w-full p-6 shadow-xl z-10">
+        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+            <h3 class="font-bold text-base text-gray-900 uppercase">Evaluate Peer Tutor</h3>
+            <button onclick="closeModal('rateTutorModal')" class="text-gray-500 hover:text-black font-bold text-lg">&times;</button>
+        </div>
+
+        <form action="{{ url_for('rate_tutor') }}" method="POST" class="mt-4 space-y-4">
+            <div>
+                <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Peer Tutor</label>
+                <input type="text" name="tutor_name" id="modalTutorNameInput" readonly required
+                       class="w-full px-3 py-2 text-sm bg-gray-100 font-bold border border-gray-300 text-gray-900">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Rating Evaluation</label>
+                <select name="rating" required class="w-full px-3 py-2 text-sm border border-gray-300 text-gray-900">
+                    <option value="5">5 &mdash; Outstanding Academic Guidance</option>
+                    <option value="4">4 &mdash; Very Satisfactory Consultation</option>
+                    <option value="3">3 &mdash; Satisfactory</option>
+                    <option value="2">2 &mdash; Needs Minor Improvement</option>
+                    <option value="1">1 &mdash; Unsatisfactory</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-gray-200">
+                <button type="button" onclick="closeModal('rateTutorModal')" class="px-4 py-2 text-xs font-bold border border-gray-400 uppercase">
+                    Cancel
+                </button>
+                <button type="submit" class="bg-brand-red hover:bg-brand-dark text-white px-4 py-2 text-xs font-bold uppercase">
+                    Submit Evaluation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showDashboardTab(tabName) {
+    const panes = document.querySelectorAll('.tab-pane');
+    panes.forEach(function (pane) {
+        pane.classList.add('hidden');
+    });
+
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(function (btn) {
+        btn.className = 'tab-btn py-3 px-5 border-b-2 border-transparent text-gray-600 hover:text-black';
+    });
+
+    const activePane = document.getElementById('tab-content-' + tabName);
+    const activeBtn = document.getElementById('btn-tab-' + tabName);
+
+    if (activePane) {
+        activePane.classList.remove('hidden');
+    }
+    if (activeBtn) {
+        activeBtn.className = 'tab-btn py-3 px-5 border-b-2 bg-white border-brand-red text-brand-red';
+    }
+
+    // Update query url without page reload
+    if (window.history.pushState) {
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?tab=' + tabName;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+    }
+}
+
+function selectTutorAndOpenBooking(tutorName, subject) {
+    showDashboardTab('schedule');
+    const tutorSelect = document.getElementById('bookingTutorSelect');
+    const subjectSelect = document.getElementById('bookingSubjectSelect');
+
+    if (tutorSelect) {
+        for (let i = 0; i < tutorSelect.options.length; i++) {
+            if (tutorSelect.options[i].value.includes(tutorName)) {
+                tutorSelect.selectedIndex = i;
+                break;
+            }
+        }
+    }
+    if (subjectSelect) {
+        for (let j = 0; j < subjectSelect.options.length; j++) {
+            if (subjectSelect.options[j].value === subject) {
+                subjectSelect.selectedIndex = j;
+                break;
+            }
+        }
+    }
+}
+
+function openRatingModal(tutorName) {
+    const input = document.getElementById('modalTutorNameInput');
+    if (input) {
+        input.value = tutorName;
+    }
+    openModal('rateTutorModal');
+}
+</script>
+{% endblock %}

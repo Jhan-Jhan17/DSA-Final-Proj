@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}SpartanSync | BatStateU GSuite Access Portal (AY 2026-2027){% endblock %}
+
+{% block navbar %}
+<nav class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <img src="{{ url_for('static', filename='img/spartansync_logo.png') }}" alt="SpartanSync Official Seal" class="w-10 h-10 object-contain">
+            <div>
+                <span class="text-xl font-bold text-brand-red tracking-tight">SpartanSync</span>
+                <span class="hidden sm:inline-block text-xs text-gray-500 ml-2 pl-2 border-l border-gray-300">Peer Tutoring Portal</span>
+            </div>
+        </div>
+        <div class="text-xs text-gray-700 font-bold bg-gray-100 border border-gray-300 px-3 py-1">
+            Academic Year 2026&ndash;2027
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10 flex items-center justify-center">
+    <div class="w-full max-w-xl">
+
+        <!-- Access Portal Box -->
+        <div class="bg-white border-2 border-brand-red shadow-sm">
+            <!-- Header with Official Logo -->
+            <div class="bg-brand-red px-6 py-6 text-white text-center">
+                <img src="{{ url_for('static', filename='img/spartansync_logo.png') }}" alt="BatStateU SpartanSync Emblem"
+                     class="w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-3 object-contain drop-shadow-md">
+                <span class="text-xs font-semibold text-red-200 uppercase tracking-wider block">Batangas State University</span>
+                <h1 class="text-2xl font-bold tracking-tight mt-1">SpartanSync Portal</h1>
+                <p class="text-xs text-red-100 mt-1">Peer Tutoring &amp; Academic Consultation Platform</p>
+            </div>
+
+            <!-- Tab Switcher: Sign In vs Register -->
+            <div class="grid grid-cols-2 border-b-2 border-gray-200 bg-gray-100 text-center font-bold text-xs uppercase tracking-wider">
+                <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')"
+                        class="py-3 px-4 border-b-2 {% if active_form != 'register' %}bg-white border-brand-red text-brand-red{% else %}text-gray-600 border-transparent hover:text-black{% endif %}">
+                    Sign In with GSuite
+                </button>
+                <button type="button" id="tabBtnRegister" onclick="switchAuthTab('register')"
+                        class="py-3 px-4 border-b-2 {% if active_form == 'register' %}bg-white border-brand-red text-brand-red{% else %}text-gray-600 border-transparent hover:text-black{% endif %}">
+                    Register GSuite Account
+                </button>
+            </div>
+
+            <div class="p-6 sm:p-8 space-y-6">
+
+                <!-- ─────────────────────────────────────────── -->
+                <!-- TAB 1: SIGN IN FORM                         -->
+                <!-- ─────────────────────────────────────────── -->
+                <div id="authFormLogin" class="{% if active_form == 'register' %}hidden{% endif %} space-y-5">
+                    <div class="bg-brand-light border border-red-300 p-3 text-xs text-gray-900 leading-relaxed">
+                        <strong class="text-brand-red block mb-0.5">Authorized Institutional Login:</strong>
+                        Sign in using your registered <code class="font-mono bg-white px-1 border border-red-200">@g.batstate-u.edu.ph</code> student or faculty GSuite email.
+                    </div>
+
+                    <form action="{{ url_for('handle_login') }}" method="POST" class="space-y-4">
+                        <!-- Role Selection -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Select Academic Role</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="border border-gray-300 p-3 flex items-center gap-2 cursor-pointer hover:border-brand-red bg-white has-[:checked]:border-brand-red has-[:checked]:bg-brand-light">
+                                    <input type="radio" name="role" value="student" checked class="text-brand-red focus:ring-brand-red">
+                                    <span class="text-xs font-bold text-gray-900">Student / Tutee</span>
+                                </label>
+                                <label class="border border-gray-300 p-3 flex items-center gap-2 cursor-pointer hover:border-brand-red bg-white has-[:checked]:border-brand-red has-[:checked]:bg-brand-light">
+                                    <input type="radio" name="role" value="tutor" class="text-brand-red focus:ring-brand-red">
+                                    <span class="text-xs font-bold text-gray-900">Peer Tutor / Facilitator</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- GSuite Email -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">BatStateU GSuite Email</label>
+                            <input type="email" name="email" placeholder="sr-code@g.batstate-u.edu.ph" required
+                                   pattern="[a-zA-Z0-9._%+\-]+@(g\.)?batstate\-u\.edu\.ph$"
+                                   title="Only official Batangas State University GSuite addresses (@g.batstate-u.edu.ph or @batstate-u.edu.ph) are permitted."
+                                   class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 bg-white focus:outline-none focus:border-brand-red">
+                            <span class="text-2xs text-gray-500 mt-1 block">Accepted: @g.batstate-u.edu.ph or @batstate-u.edu.ph</span>
+                        </div>
+
+                        <!-- Password -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Password</label>
+                            <input type="password" name="password" placeholder="Enter your portal password" required
+                                   class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 bg-white focus:outline-none focus:border-brand-red">
+                        </div>
+
+                        <button type="submit" class="w-full bg-brand-red hover:bg-brand-dark text-white font-bold py-3 px-4 text-xs uppercase tracking-wider transition-colors shadow-sm">
+                            Access Dashboard
+                        </button>
+                    </form>
+
+                    <div class="pt-3 border-t border-gray-200 text-center text-xs text-gray-600">
+                        Do not have an active GSuite account registered?
+                        <button type="button" onclick="switchAuthTab('register')" class="text-brand-red font-bold underline ml-1">
+                            Register GSuite Account
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ─────────────────────────────────────────── -->
+                <!-- TAB 2: REGISTER GSUITE ACCOUNT FORM         -->
+                <!-- ─────────────────────────────────────────── -->
+                <div id="authFormRegister" class="{% if active_form != 'register' %}hidden{% endif %} space-y-5">
+                    <div class="bg-gray-100 border border-gray-300 p-3 text-xs text-gray-900 leading-relaxed">
+                        <strong class="text-gray-900 block mb-0.5">Account Registration Requirements:</strong>
+                        Registration is strictly enforced for official BatStateU students and faculty. Provide your university SR-Code and verified GSuite email address.
+                    </div>
+
+                    <form action="{{ url_for('handle_register') }}" method="POST" class="space-y-4">
+                        <!-- Role Selection -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Register As</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="border border-gray-300 p-3 flex items-center gap-2 cursor-pointer hover:border-brand-red bg-white has-[:checked]:border-brand-red has-[:checked]:bg-brand-light">
+                                    <input type="radio" name="role" value="student" checked onchange="toggleTutorSubjectField(false)" class="text-brand-red focus:ring-brand-red">
+                                    <span class="text-xs font-bold text-gray-900">Student / Tutee</span>
+                                </label>
+                                <label class="border border-gray-300 p-3 flex items-center gap-2 cursor-pointer hover:border-brand-red bg-white has-[:checked]:border-brand-red has-[:checked]:bg-brand-light">
+                                    <input type="radio" name="role" value="tutor" onchange="toggleTutorSubjectField(true)" class="text-brand-red focus:ring-brand-red">
+                                    <span class="text-xs font-bold text-gray-900">Peer Tutor / Facilitator</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Name & SR-Code -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Full Legal Name</label>
+                                <input type="text" name="name" placeholder="Juan Dela Cruz" required
+                                       class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Student / Employee SR-Code</label>
+                                <input type="text" name="sr_code" placeholder="23-01824" required
+                                       class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300">
+                            </div>
+                        </div>
+
+                        <!-- GSuite Email -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">BatStateU GSuite Email</label>
+                            <input type="email" name="email" placeholder="username@g.batstate-u.edu.ph" required
+                                   pattern="[a-zA-Z0-9._%+\-]+@(g\.)?batstate\-u\.edu\.ph$"
+                                   title="Only official BatStateU GSuite accounts ending in @g.batstate-u.edu.ph or @batstate-u.edu.ph are permitted."
+                                   class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300">
+                            <span class="text-2xs text-gray-500 mt-1 block">Strictly requires @g.batstate-u.edu.ph or @batstate-u.edu.ph</span>
+                        </div>
+
+                        <!-- Department & Subject -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-800 mb-1">College / Department</label>
+                                <select name="department" class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300">
+                                    <option value="College of Engineering">College of Engineering</option>
+                                    <option value="College of Informatics &amp; Computing Sciences">College of Informatics &amp; Computing Sciences</option>
+                                    <option value="College of Science &amp; Mathematics">College of Science &amp; Mathematics</option>
+                                    <option value="College of Industrial Technology">College of Industrial Technology</option>
+                                    <option value="General Engineering">General Engineering</option>
+                                </select>
+                            </div>
+                            <div id="tutorSubjectContainer" class="hidden">
+                                <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Primary Tutoring Subject</label>
+                                <select name="subject" class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300">
+                                    <option value="Data Structures">Data Structures</option>
+                                    <option value="Algorithms">Algorithms</option>
+                                    <option value="Calculus">Calculus</option>
+                                    <option value="Physics">Physics</option>
+                                    <option value="Discrete Mathematics">Discrete Mathematics</option>
+                                    <option value="Object-Oriented Programming">Object-Oriented Programming</option>
+                                    <option value="Linear Algebra">Linear Algebra</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-800 mb-1">Create Portal Password (min. 6 characters)</label>
+                            <input type="password" name="password" minlength="6" placeholder="Choose a secure password" required
+                                   class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300">
+                        </div>
+
+                        <button type="submit" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 px-4 text-xs uppercase tracking-wider transition-colors shadow-sm">
+                            Complete GSuite Registration
+                        </button>
+                    </form>
+
+                    <div class="pt-3 border-t border-gray-200 text-center text-xs text-gray-600">
+                        Already have an account?
+                        <button type="button" onclick="switchAuthTab('login')" class="text-brand-red font-bold underline ml-1">
+                            Sign In with GSuite
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="text-center text-xs text-gray-500 mt-6">
+            Academic Year 2026&ndash;2027 &bull; Batangas State University Office of Student Affairs
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchAuthTab(tab) {
+    const loginForm = document.getElementById('authFormLogin');
+    const registerForm = document.getElementById('authFormRegister');
+    const tabLogin = document.getElementById('tabBtnLogin');
+    const tabRegister = document.getElementById('tabBtnRegister');
+
+    if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        tabLogin.className = 'py-3 px-4 border-b-2 bg-white border-brand-red text-brand-red';
+        tabRegister.className = 'py-3 px-4 border-b-2 text-gray-600 border-transparent hover:text-black';
+    } else {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        tabRegister.className = 'py-3 px-4 border-b-2 bg-white border-brand-red text-brand-red';
+        tabLogin.className = 'py-3 px-4 border-b-2 text-gray-600 border-transparent hover:text-black';
+    }
+}
+
+function toggleTutorSubjectField(isTutor) {
+    const container = document.getElementById('tutorSubjectContainer');
+    if (container) {
+        if (isTutor) {
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+}
+</script>
+{% endblock %}
